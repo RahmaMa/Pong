@@ -1,0 +1,91 @@
+<html>
+ <body>
+ 	<div style="position:absolute;top:75%">
+        REGLES DU JEU <br> <br>
+        Joueur 1 : monter = &uarr; / descendre = &darr; <br>
+		Joueur 2 : monter = a / descendre = q <br>
+		Joueur 3 : monter= t / descendre = g <br>
+		Joueur 4 : monter = p / descendre = m <br>
+	</div>
+  <script src="./js/game.js"></script>
+  <script src="./js/game.display.js"></script>
+  <script src="./js/game.keycode.js"></script>
+  <script src="./js/game.control.js"></script>
+  <script src="./js/game.ai.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+    (function () {
+
+      const socket = io()
+      // début du code isolé
+      var requestAnimId;
+      game.socket = socket;
+      var initialisation = function() {
+        // le code de l'initialisation
+      
+		}
+		
+		socket.on('init', function(msg){
+			if(game.loaded === false)
+			{
+				game.clientId = socket.id;
+				game.init(msg)
+				requestAnimId = window.requestAnimationFrame(main); // premier appel de main au rafraîchissement de la page	
+			}
+		});
+		
+		
+		socket.on('ball', function(msg){			
+			game.ball.move(msg);
+		
+		});
+		socket.on('stopIaReturn', function(msg){	
+			game.control.stopIa(msg[0]);
+			game.disabledPlayers(msg[1]);
+		});
+		
+
+		socket.on('players', function(msg){		
+			game.movePlayers(msg)
+			
+			if(game.ais[0] !== undefined && game.ais[0].enabled === true)
+				game.ais[0].move();
+
+			if(game.ais[1] !== undefined && game.ais[1].enabled === true)
+				game.ais[1].move();
+
+			if( game.ais[2] !== undefined && game.ais[2].enabled === true)
+				game.ais[2].move();			
+
+			socket.emit('movePlayers',game.coordPlayers());
+		});
+      
+		socket.on('score', function(msg){
+			game.updateScore(msg);
+		});
+      
+		function main (){
+		
+			game.clearLayer(game.playersBallLayer);
+			game.displayPlayers();
+			game.displayBall();
+			if ( game.ball.inGame ) {
+				game.lostBall();
+			}
+		
+			requestAnimId = window.requestAnimationFrame(main);
+		}
+      
+      window.onload = initialisation; // appel de la fonction initialisation au chargement de la page
+      // association des méthodes aux évènements :
+      // onKeyDown = à l'appui de la touche
+      // onKeyUp = au relèvement de la touche
+     
+      // fin du code isolé
+    })();
+</script>
+</body>
+</html>
